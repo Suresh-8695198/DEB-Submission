@@ -8,36 +8,39 @@ function App() {
 
   const showNotification = (msg, style) => {
     setToast({ show: true, msg, style });
-    setTimeout(() => setToast({ show: false, msg: '', style: '' }), 7000);
+    setTimeout(() => setToast({ show: false, msg: '', style: '' }), 10000); // 10s for slow errors
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
+    // Validate form data
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
     try {
+      // 1. High Speed Vercel Sync
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+
       const result = await response.json();
 
       if (result.Flag === 1) {
         showNotification('✅ SUCCESS: Data sync with UGC successful!', 'success');
         e.target.reset();
       } else if (result.Flag === 3) {
-        showNotification('⚠️ DUPLICATE: Student record already exists.', 'warning');
+        showNotification('⚠️ DUPLICATE: Record already exists.', 'warning');
       } else {
-        // If the backend has caught the raw UGC error, show it
-        const ugcMsg = result.details ? `${result.Message}: ${result.details}` : result.Message;
-        showNotification(`❌ FAILED: ${ugcMsg || 'Institutional Key Mismatch'}`, 'error');
+        // Detailed UGC Error Reporting
+        showNotification(`❌ FAILED: ${result.Message || 'UGC Gateway Problem'}`, 'error');
       }
+
     } catch (err) {
-      showNotification('❌ CONNECTION ERROR: Check your internet or Vercel logs.', 'error');
+      showNotification('❌ VERCEL TIMEOUT: The UGC server is taking too long to respond (>10s).', 'error');
     } finally {
       setLoading(false);
     }

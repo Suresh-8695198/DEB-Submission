@@ -1,54 +1,50 @@
-// api/submit.js (Debug Mode Enabled)
-export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ status: 'error', message: 'Method Not Allowed' });
-    }
+// api/submit.js (High-Speed UGC Proxy)
+import https from 'https';
 
-    // Official UGC DEB Endpoints
+export default async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).send('POST only');
+
     const api_url = "https://deb.ugc.ac.in/api/studentdata";
-    
-    // INSTITUTIONAL CREDENTIALS
-    const api_key = "FSpmSiIFjQKSoQp2Ifdw2kFHTPF0ea5G"; 
+    const api_key = "FSpmSiIFjQKSoQp2Ifdw2kFHTPF0ea5G";
     const client_id = "PU0470_GetAdmissionDetails";
 
-    try {
-        const payload = req.body;
-        const params = new URLSearchParams();
-        Object.keys(payload).forEach(key => params.append(key, payload[key]));
+    const params = new URLSearchParams(req.body).toString();
 
-        // Sync with UGC
+    // Custom Agent to bypass SSL errors (matches Python verify=False)
+    const agent = new https.Agent({ rejectUnauthorized: false });
+
+    // Vercel Hobby Limit is 10s - we must finish in 9s
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 9000);
+
+    try {
         const response = await fetch(api_url, {
             method: 'POST',
+            signal: controller.signal,
+            agent: agent, // Bypass SSL
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                "APIKey": api_key, // Used in Python snippet
+                "APIKey": api_key,
                 "ClientID": client_id,
-                "Authorization": `Bearer ${api_key}` // Fallback for PHP-style tokens
+                "Authorization": `Bearer ${api_key}`
             },
-            body: params.toString()
+            body: params
         });
 
-        const rawText = await response.text();
-        
-        // Check if response is JSON (Good) or HTML (Bad)
-        try {
-            const data = JSON.parse(rawText);
-            return res.status(200).json(data);
-        } catch (jsonErr) {
-            // This is where we catch the "Invalid Format"
-            console.error('UGC HTML ERROR:', rawText);
-            
-            // Extract a readable snippet from the UGC error page
-            const errorSnippet = rawText.substring(0, 200).replace(/<[^>]*>?/gm, '');
-            
-            return res.status(200).json({ 
-                Flag: 0, 
-                Message: "UGC SERVER REJECTED REQUEST",
-                details: errorSnippet.trim() || "Institutional Key Mismatch or IP Block"
-            });
-        }
+        clearTimeout(timeout);
+        const data = await response.json();
+        return res.status(200).json(data);
 
     } catch (error) {
-        return res.status(500).json({ status: 'error', message: 'Sync Timeout' });
+        console.error('SYNC ERROR:', error.name);
+        
+        if (error.name === 'AbortError') {
+            return res.status(200).json({ 
+                Flag: 0, 
+                Message: "UGC SERVER TOO SLOW (Timed out after 10s). Use the PHP version for slow connections." 
+            });
+        }
+        
+        return res.status(500).json({ status: 'error', message: 'UGC Link Broken' });
     }
 }

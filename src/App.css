@@ -7,22 +7,19 @@
   --warning: #f59e0b;
   --background: #f1f5f9;
   --card-bg: #ffffff;
+  --bg-input: #f8fafc;
   --text-dark: #0f172a;
   --text-muted: #64748b;
-  --radius-lg: 16px;
-  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-md: 8px;
   --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: 'Outfit', -apple-system, system-ui, sans-serif;
-  background: var(--background);
-  color: var(--text-dark);
-}
+body { background: var(--background); font-family: 'Outfit', sans-serif; overflow: hidden; }
 
-.portal-wrapper {
+.portal-overlay {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -30,7 +27,7 @@ body {
   padding: 1rem;
 }
 
-.portal-container {
+.portal-modal {
   width: 100%;
   max-width: 900px;
   background: var(--card-bg);
@@ -40,31 +37,23 @@ body {
   animation: fadeIn 0.8s ease-out;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
 .portal-header {
-  background: var(--primary);
-  padding: 2.5rem 2rem;
-  color: white;
-  text-align: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.portal-header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
+.portal-header h2 { font-size: 1.25rem; font-weight: 700; color: #1e293b; }
 
-.portal-header p {
-  opacity: 0.85;
-  font-size: 0.95rem;
-}
+.close-btn { background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; transition: 0.3s; }
+.close-btn:hover { color: #1e293b; }
 
 .form-grid {
-  padding: 2rem;
+  padding: 2.5rem;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
@@ -77,13 +66,14 @@ body {
 .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
 .form-group.full-width { grid-column: 1 / -1; }
 
-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+label { font-size: 0.85rem; font-weight: 600; color: #64748b; }
 
 input, select {
-  padding: 0.75rem 1rem;
-  border: 1.5px solid #e2e8f0;
+  padding: 0.8rem 1rem;
+  border: 1px solid #e2e8f0;
   border-radius: var(--radius-md);
   font-size: 1rem;
+  background: var(--bg-input);
   transition: all 0.3s ease;
 }
 
@@ -91,6 +81,7 @@ input:focus, select:focus {
   outline: none;
   border-color: var(--primary-light);
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  background: white;
 }
 
 .submit-btn {
@@ -98,7 +89,7 @@ input:focus, select:focus {
   color: white;
   border: none;
   border-radius: var(--radius-md);
-  padding: 1rem;
+  padding: 1.1rem;
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
@@ -108,10 +99,8 @@ input:focus, select:focus {
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
+  margin-top: 1rem;
 }
-
-.submit-btn:hover { background: #1e40af; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2); }
-.submit-btn:disabled { background: #cbd5e1; cursor: not-allowed; }
 
 .status-toast {
   position: fixed;
@@ -120,7 +109,7 @@ input:focus, select:focus {
   padding: 1rem 1.5rem;
   border-radius: var(--radius-md);
   background: white;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   z-index: 1000;
   animation: slideIn 0.4s ease-out;
 }
@@ -130,6 +119,9 @@ input:focus, select:focus {
 .toast-success { border-left: 5px solid var(--secondary); color: #065f46; }
 .toast-error { border-left: 5px solid var(--danger); color: #991b1b; }
 .toast-warning { border-left: 5px solid var(--warning); color: #92400e; }
+
+.status-toast.hide { animation: slideOut 0.4s ease-in forwards; }
+@keyframes slideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
 
 .spinner {
   width: 24px;

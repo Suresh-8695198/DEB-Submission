@@ -1,17 +1,9 @@
-// api/submit.js (MUMBAI EDGE + CORRECT ENDPOINT)
-export const config = {
-  runtime: 'edge', 
-  regions: ['bom1'] 
-};
+// api/submit.js (Dual Submission Sync)
+export const config = { runtime: 'edge', regions: ['bom1'] };
 
 export default async function handler(req) {
     if (req.method !== 'POST') return new Response('POST Only', { status: 405 });
 
-    /**
-     * ✅ UPDATED ENDPOINT
-     * Switched from /studentdata to /DebUniqueID/GetAdmissionDetails
-     * to match your PU0470_GetAdmissionDetails ClientID.
-     */
     const api_url = "https://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails";
     const api_key = "FSpmSiIFjQKSoQp2Ifdw2kFHTPF0ea5G"; 
     const client_id = "PU0470_GetAdmissionDetails";
@@ -19,11 +11,14 @@ export default async function handler(req) {
     const body = await req.json();
     const params = new URLSearchParams(body).toString();
 
+    // REPLICATING PYTHON LOGIC: Sending data in the URL (QueryString) for a POST request
+    const target_with_params = `${api_url}?${params}`;
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 9500);
 
     try {
-        const response = await fetch(api_url, {
+        const response = await fetch(target_with_params, {
             method: 'POST',
             signal: controller.signal,
             headers: {
@@ -32,8 +27,8 @@ export default async function handler(req) {
                 "ClientID": client_id,
                 "Authorization": `Bearer ${api_key}`,
                 "Connection": "keep-alive"
-            },
-            body: params
+            }
+            // NO Request Body - data is in the URL (Params)
         });
 
         clearTimeout(timeout);
@@ -47,7 +42,7 @@ export default async function handler(req) {
     } catch (error) {
         return new Response(JSON.stringify({ 
             Flag: 0, 
-            Message: "UGC SERVER TIMEOUT. Please try during non-peak hours." 
+            Message: "UGC SYSTEM TOO SLOW. Please retry." 
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }

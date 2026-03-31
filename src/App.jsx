@@ -15,25 +15,35 @@ function App() {
     e.preventDefault();
     setLoading(true);
     
+    // Clean and validate form data
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
     try {
+      // 1. Call our improved Vercel Node.js Serverless API
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
+
+      // 2. Parse results carefully
       const result = await response.json();
 
+      // 3. Official UGC Response Flags
       if (result.Flag === 1) {
         showNotification('✅ SUCCESS: Data Submitted to UGC Portal!', 'success');
         e.target.reset();
+      } else if (result.Flag === 3) {
+        showNotification('⚠️ DUPLICATE: Record already exists.', 'warning');
       } else {
-        showNotification(`❌ FAILED: ${result.Message || 'Verification failed'}`, 'error');
+        // Fallback for cases where UGC returns Flag=0 or error messages
+        showNotification(`❌ FAILED: ${result.Message || 'UGC Portal Rejected Submission'}`, 'error');
       }
     } catch (err) {
-      showNotification('❌ NETWORK ERROR: Check your connection.', 'error');
+      // 4. Client-side fetch failed (network level)
+      showNotification('❌ CONNECTION ERROR: Please try again or check your Vercel logs.', 'error');
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -46,7 +56,7 @@ function App() {
       <main className="portal-modal">
         <header className="portal-header">
           <h2>UGC Admission Details Submission</h2>
-          <button className="close-btn">&times;</button>
+          <button className="close-btn" type="button" onClick={() => window.location.reload()}>&times;</button>
         </header>
 
         <div className="form-body">
@@ -54,42 +64,42 @@ function App() {
             
             <div className="form-group">
               <label>DEB Unique ID</label>
-              <input type="text" name="DEBuniqueID" placeholder="022604242032" required />
+              <input type="text" name="DEBuniqueID" placeholder="022604242032" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>Enrollment Number</label>
-              <input type="text" name="EnrollmentNumber" placeholder="C26PMH21500001" required />
+              <input type="text" name="EnrollmentNumber" placeholder="C26PMH21500001" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>Course Name (DEB Code)</label>
-              <input type="text" name="CourseName" placeholder="ODL47003" required />
+              <input type="text" name="CourseName" placeholder="ODL47003" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>Admission Date</label>
-              <input type="text" name="AdmissionDate" placeholder="19-02-2026" required />
+              <input type="text" name="AdmissionDate" placeholder="19-02-2026" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>Category</label>
-              <input type="text" name="Category" placeholder="MBC" required />
+              <input type="text" name="Category" placeholder="MBC" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>Government Identifier</label>
-              <input type="text" name="GovernmentIdentifier" placeholder="AADHAR Card" required />
+              <input type="text" name="GovernmentIdentifier" placeholder="AADHAR Card" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>Govt Identifier Number</label>
-              <input type="text" name="GovernmentIdentifierNumber" placeholder="655882365116" required />
+              <input type="text" name="GovernmentIdentifierNumber" placeholder="655882365116" required autoComplete="off" />
             </div>
 
             <div className="form-group">
               <label>University Name</label>
-              <input type="text" name="UniversityName" defaultValue="U-0470" required />
+              <input type="text" name="UniversityName" defaultValue="U-0470" required readOnly={false} />
             </div>
 
             <div className="form-group">
@@ -115,6 +125,7 @@ function App() {
               <input type="text" name="Nationality" defaultValue="Indian" required />
             </div>
             
+            {/* Essential Backend-only Fields */}
             <input type="hidden" name="Aishe_Code" value="U-0470" />
             <input type="hidden" name="CountryResidence" value="India" />
 

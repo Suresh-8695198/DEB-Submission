@@ -1,13 +1,18 @@
-// api/submit.js (MUMBAI-PINNED EDGE SPEED)
+// api/submit.js (MUMBAI EDGE + CORRECT ENDPOINT)
 export const config = {
-  runtime: 'edge', // This is the modern Vercel High-Speed runtime
-  regions: ['bom1'] // Force Mumbai local data center
+  runtime: 'edge', 
+  regions: ['bom1'] 
 };
 
 export default async function handler(req) {
     if (req.method !== 'POST') return new Response('POST Only', { status: 405 });
 
-    const api_url = "https://deb.ugc.ac.in/api/studentdata";
+    /**
+     * ✅ UPDATED ENDPOINT
+     * Switched from /studentdata to /DebUniqueID/GetAdmissionDetails
+     * to match your PU0470_GetAdmissionDetails ClientID.
+     */
+    const api_url = "https://deb.ugc.ac.in/api/DebUniqueID/GetAdmissionDetails";
     const api_key = "FSpmSiIFjQKSoQp2Ifdw2kFHTPF0ea5G"; 
     const client_id = "PU0470_GetAdmissionDetails";
 
@@ -15,7 +20,7 @@ export default async function handler(req) {
     const params = new URLSearchParams(body).toString();
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 9500); // Strict Vercel Limit
+    const timeout = setTimeout(() => controller.abort(), 9500);
 
     try {
         const response = await fetch(api_url, {
@@ -26,7 +31,7 @@ export default async function handler(req) {
                 "APIKey": api_key,
                 "ClientID": client_id,
                 "Authorization": `Bearer ${api_key}`,
-                "Connection": "keep-alive" // Keep the pipe open
+                "Connection": "keep-alive"
             },
             body: params
         });
@@ -40,10 +45,9 @@ export default async function handler(req) {
         });
 
     } catch (error) {
-        console.error('TIMEOUT ERROR:', error.name);
         return new Response(JSON.stringify({ 
             Flag: 0, 
-            Message: "UGC SERVER SLOW - BUT MUMBAI PROXY ACTIVE. Please retry." 
+            Message: "UGC SERVER TIMEOUT. Please try during non-peak hours." 
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
